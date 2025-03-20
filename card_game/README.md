@@ -1,6 +1,6 @@
 
 HOW TO USE:
--Download the repo
+-Download the repository
 -Open index.html in your favorite internet browser
 -Have fun!
 
