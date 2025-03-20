@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>notUno</title>
+</head>
+<body>
+    <div class="container">
+        <canvas
+          id="canvas"
+          width="300"
+          height="300"
+          style="height: 300px; width: 300px"
+        ></canvas>
+        <pre id="log"></pre>
+    </div>
+    <script>
+        /*
+        hands will have a 13 card limit maybe? discard if you draw and have more than 13 cards
+        list of card types: number 0-9, wild, wild draw 4, draw +2/4,
+        want to include stacking draw + cards
+        
+        */
+
+        //hands and card to be played on
+        let playerHand = [];
+        let aiHand = [];
+        let midCard; //card that is played in the middle
+        let animationId;
+        let deckCard; //not really relevant, just used for a backside card to click on
+        let yourTurn = 1;
+        const canvasEle = document.getElementById('canvas');
+        let timeBetweenMoves = Date.now();
+        let stackSituation = 0;
+        let stackDraw = 0;
+
+        
+        //generates a card randomly
+        function generateCard(side){
+            //card class?/structure?
+            let newCard = {
+                value: -1,
+                color: "None",
+                img: "None",
+                effect: "None",
+                x: -1,
+                y: -1
+            };
+            
+            //generates effect for card if it gets one
+            let effects = ["+2", "skip", "wild", "wild+4", "+4"]
+            let ifGetEffect = randInt(0, 10);
+            if(ifGetEffect >= 9){
+                newCard.effect = effects[randInt(0, effects.length - 1)];
+            }
+
+            //generates color if not a wild card
+            if(newCard.effect != "wild" && newCard.effect != "wild+4"){
+                //generates color if not wild card
+                let colors = ["red", "blue", "yellow", "green"];
+                newCard.color = colors[randInt(0,3)];
+            } else {
+                newCard.color === "wild";
+            }
+
+            //sets value if not an effect card -> go to else statement for non effect cards
+            if (newCard.effect != "None"){
+                newCard.value != -1;
+            } else {
+                newCard.value = randInt(0,9);
+            }
+            
+
+            //if player card, allows the player to see the image, else shows the card backside.
+            if (side){
+                if (newCard.img === "None"){
+                    if (newCard.effect === "None"){
+                        newCard.img = new Image();
+                        newCard.img.src = "img/" + newCard.value + newCard.color + ".png";
+                    } else if (newCard.effect != "wild" && newCard.effect != "wild+4"){
+                        newCard.img = new Image();
+                        newCard.img.src = "img/" + newCard.effect + newCard.color + ".png";
+                    } else {
+                        newCard.img = new Image();
+                        newCard.img.src = "img/" + newCard.effect + ".png";
+                    }
+                }
+                if (newCard.effect === "None"){
+                    console.log("Drew a", newCard.color, newCard.value);
+                } else if (newCard.effect != "wild" && newCard.effect != "wild+4"){
+                    console.log("Drew a", newCard.color, newCard.effect);
+                } else {
+                    console.log("Drew a", newCard.effect);
+                }
+                
+            } else {
+                newCard.img = new Image();
+                newCard.img.src = "img/cardBack.png";
+            }
+            
+            return newCard;
+        }
+
+        function logCardtoConsole(phrase,card){
+            if (card.effect === "None"){
+                console.log(phrase, card.color, card.value);
+            } else if (card.effect != "wild" && card.effect != "wild+4"){
+                console.log(phrase, card.color, card.effect);
+            } else {
+                console.log(phrase, card.effect);
+            }
+        }
+
+
+        //init settings and such
+        function initGame(){
+            //generates hands for the player and ai
+            for (i = 0; i < 7; i++){
+                playerHand.push(generateCard(1));
+                aiHand.push(generateCard(0));
+            }
+
+            //adjusts the x and y values of player and ai cards
+            //so they are displayed nicely
+            initPlayerHandPosition();
+            initAiHandPosition();
+            
+
+            midCard = generateCard(1);
+            midCard.x = canvas.width /2 - 6;
+            midCard.y = canvas.height /2 - 10;
+            deckCard = generateCard(0);
+            deckCard.x = canvas.width/4 * 3;
+            deckCard.y = canvas.height /2 - 10;
+            
+        }
+        initGame();
+
+        //sets the x and y positions of the cards in the players hand
+        function initPlayerHandPosition(){
+            for(const card of playerHand){
+                card.x = 15 + (12 * playerHand.indexOf(card)) + (playerHand.indexOf(card) * 6);
+                card.y = canvas.height - 45;
+            }
+        }
+
+        //sets the x and y positions of the cards in the opponent's hand
+        function initAiHandPosition(){
+            for(const card of aiHand){
+                card.x = 15 + (12 * aiHand.indexOf(card)) + (aiHand.indexOf(card) * 6);
+                card.y = 15;
+            }
+        }
+
+        //gets a random integer between min and max (inclusive)
+        function randInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        //determines if a card can be played, returns true if it can
+        function isPlayable(card){
+            if (card.color === midCard.color
+            || (card.value === midCard.value && card.value != -1) || 
+            (card.effect === midCard.effect && card.value === midCard.value) ||
+            card.effect === "wild" || midCard.effect === "wild" ||
+            card.effect === "wild+4" || midCard.effect === "wild+4"){
+                return true;
+            }
+        }
+
+        //determines if the player has a playable card in hand
+        //return returns true if yes, false if no
+        function hasPlayableCards(hand){
+            let playable = false;
+            for (const card of hand){
+                if(isPlayable(card)){
+                    playable = true;
+                    break;
+                }
+            }
+            console.log("Playable hand: ", playable);
+            return playable;
+        }
+
+        //gets the mouse position
+        function getMousePos(canvas, event) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
+        //returns true if the mouse is colliding with a card
+        function colliding(position, card){
+            let collision = false;
+            console.log(position.x, position.y);
+            if(position.x >= card.x && 
+            position.x <= card.x + 12 &&
+            position.y >= card.y &&
+            position.y <= card.y + 20){
+                collision = true;
+                console.log("Collision");
+            }
+            
+            return collision;
+        }
+        
+        
+        //sets the img of a card based on their attributes
+        function makeImgOfCard(newCard){
+           
+            if (newCard.effect === "None"){
+                newCard.img = new Image();
+                newCard.img.src = "img/" + newCard.value + newCard.color + ".png";
+            } else if (newCard.effect != "wild" && newCard.effect != "wild+4"){
+                newCard.img = new Image();
+                newCard.img.src = "img/" + newCard.effect + newCard.color + ".png";
+            } else {
+                newCard.img = new Image();
+                newCard.img.src = "img/" + newCard.effect + ".png";
+            }
+        }
+
+        //listens for mouse click during the player's turn:
+        //if the player can make a move, lets them click the card to make the move,
+        //else waits until they draw
+        document.addEventListener('click', (event) =>{
+            if(yourTurn && hasPlayableCards(playerHand)){
+                let collision = false;
+                //cyces through player cards
+                for (const card of playerHand){
+                    collision = colliding(getMousePos(canvas,event), card);
+                    if(collision){
+                        logCardtoConsole("Touched a ", card);
+                        //checks if the card is playable; if so, plays it
+                        //then removes it from hand and reformats the hand
+                        if(isPlayable(card)){
+                            logCardtoConsole("Played a", card);
+                            card.x = midCard.x;
+                            card.y = midCard.y;
+                            midCard = card;
+                            const index = playerHand.indexOf(card)
+                            playerHand.splice(index,1);
+                            initPlayerHandPosition();
+                            if (card.effect.includes("+")){
+                                if (card.effect === "+2"){
+                                    console.log("Your opponent draws 2 cards!");
+                                    for(i = 0; i < 2; i++){
+                                        drawCard(aiHand, 0);
+                                    }
+                                } else {
+                                    console.log("Your opponenet draws 4 cards!");
+                                    for(i = 0; i < 4; i++){
+                                        drawCard(aiHand, 0);
+                                    }
+                                }
+                            } else if(card.effect === "skip"){
+                                console.log("You skipped the opponent's turn!");
+                            }else {
+                                yourTurn = 0;
+                                timeBetweenMoves = Date.now();
+                            }
+                            if (playerHand.length === 0){
+                                alert("Congratz! You won!!!")
+                                location.reload();
+                            }
+                        }
+                        break;
+                    }
+                }
+            } else if (yourTurn){
+                //if player can't make  a move, has them draw by clicking the deck
+                collision = colliding(getMousePos(canvas, event), deckCard);
+                if(collision){
+                    drawCard(playerHand, 1);
+                }
+            }    
+        } ); 
+
+        //gets a list of the playable cards in the AI's hands
+        function getPlayableAiCards(){
+            let playableCards = []
+            for(const card of aiHand){
+                if (isPlayable(card)){
+                    playableCards.push(card);
+                }
+            }
+            return playableCards;
+        }
+
+        //draws a card for one of the hands
+        function drawCard(hand, side){
+            if (hand.length >= 15){
+                if (side){
+                    let newCard = generateCard(1);
+                    while (!isPlayable(newCard)){
+                        newCard = generateCard(1);
+                    }
+                    hand.push(newCard);
+                } else {
+                    let newCard = generateCard(0);
+                    while (!isPlayable(newCard)){
+                        newCard = generateCard(0);
+                    }
+                    hand.push(newCard);
+                }
+                
+                if (side){
+                    initPlayerHandPosition();
+                } else {
+                    initAiHandPosition();
+                }
+            } else {
+                if (side){
+                    hand.push(generateCard(1));
+                    initPlayerHandPosition();
+                } else {
+                    hand.push(generateCard(0));
+                    initAiHandPosition();
+                }
+            }
+        }
+
+        //ai that determines the Ai's move
+        function playAiMove(){
+            if (hasPlayableCards(aiHand)){
+
+                playableCards = getPlayableAiCards();
+                let playedCard = playableCards[randInt(0, playableCards.length - 1)]
+                playedCard.x = midCard.x;
+                playedCard.y = midCard.y;
+                makeImgOfCard(playedCard);
+                midCard = playedCard;
+                logCardtoConsole("The opponent played a", playedCard);
+                const index = aiHand.indexOf(playedCard);
+                aiHand.splice(index, 1);
+                initAiHandPosition();
+                if (aiHand.length === 0){
+                    initAiHandPosition();
+                    setTimeout(() => {
+                        
+                    }, 1000);
+                    alert("You lost!");
+                    location.reload();
+                }
+                if (playedCard.effect.includes("+")){
+                    if (playedCard.effect === "+2"){
+                        console.log("You draw 2 cards!");
+                        for(i = 0; i < 2; i++){
+                            drawCard(playerHand, 1);
+                        }
+                    } else {
+                        console.log("You draw 4 cards!");
+                        for(i = 0; i < 4; i++){
+                            drawCard(playerHand, 1);
+                        }
+                    }
+                } else if(playedCard.effect === "skip"){
+                    console.log("Opponenet skipped your turn!");
+                } else {
+                    yourTurn = 1;
+                }
+                timeBetweenMoves = Date.now();
+                
+
+            } else {
+                //if hand is length of 15 or more, makes sure the drawn card is playable;
+                drawCard(aiHand, 0);
+            }
+        }
+
+
+        //animation loop
+        animationId = requestAnimationFrame(animate);
+
+        function animate(){
+            animationId = requestAnimationFrame(animate);
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0,0,512,512);
+            //background color
+            ctx.fillStyle = '#bbbbbb';
+            ctx.fillRect(0,0,512,512);
+
+            //aiHand bar for cards
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(12,12,canvas.height - 24,28);
+
+            //player hand bar for held cards
+            ctx.fillRect(12,canvas.height - 50,canvas.height - 24,28);
+
+            if(!yourTurn && Date.now() - timeBetweenMoves >= 1000){
+                playAiMove();
+            }
+
+            for (const card of playerHand){
+                ctx.drawImage(card.img, card.x, card.y);
+            }
+            for (const card of aiHand){
+                ctx.drawImage(card.img, card.x, card.y);
+            }
+            ctx.drawImage(midCard.img, midCard.x, midCard.y);
+            ctx.drawImage(deckCard.img, deckCard.x, deckCard.y);
+
+
+            
+            
+            
+        }
+
+        
+
+    </script>
+</body>
+</html>
