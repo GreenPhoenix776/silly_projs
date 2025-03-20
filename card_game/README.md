@@ -1,7 +1,8 @@
 
 HOW TO USE:
 -Download the repo
--Open index.html in a live server and you'll get to play UNO with an AI.
+-Open index.html in your favorite internet browser
+-Have fun!
 
 
 INFO ABOUT PROGRAM:
