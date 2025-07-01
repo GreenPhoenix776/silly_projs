@@ -9,9 +9,9 @@
     <div class="container">
         <canvas
           id="canvas"
-          width="300"
-          height="300"
-          style="height: 300px; width: 300px"
+          width="720"
+          height="720"
+          style="height: 720px; width: 720px"
         ></canvas>
         <pre id="log"></pre>
     </div>
@@ -30,6 +30,7 @@
                 this.stamina = stam;
                 this.staminaGrade = this.getStaminaRating();
                 this.acceleration = accel;
+                this.accelerationGrade = this.getAccelerationRating();
                 this.finish = finish;
                 this.fatigue = 0;
                 this.velocity = 0;
@@ -77,7 +78,7 @@
                 }
             }
 
-            //assigns a letter grade to be associated with the horse's speed stat
+            //assigns a letter grade to be associated with the horse's stamina stat
             getStaminaRating(){
                 if(this.stamina < 0.5){
                     return "G";
@@ -113,26 +114,73 @@
                     return "G";
                 }
             }
+
+            //assigns a letter grade to be associated with the horse's finsih stat
+            getAccelerationRating(){
+                if(this.acceleration < 0.4){
+                    return "G";
+                } else if (this.acceleration >=.4 && this.acceleration < 0.8){
+                    return "F";
+                } else if (this.acceleration >=0.8 && this.acceleration < 1.2){
+                    return "F+";
+                } else if (this.acceleration >= 1.2 && this.acceleration < 1.6){
+                    return "E";
+                } else if (this.acceleration >= 1.6 && this.acceleration < 2){
+                    return "E+";
+                } else if (this.acceleration >= 2 && this.acceleration < 2.5){
+                    return "D";
+                } else if (this.acceleration >= 2.5 && this.acceleration < 3){
+                    return "D+";
+                } else if (this.acceleration >= 3 && this.acceleration < 3.3){
+                    return "C";
+                } else if (this.acceleration >= 3.3 && this.acceleration < 3.6){
+                    return "C+";
+                } else if (this.acceleration >= 3.6 && this.acceleration < 4){
+                    return "B";
+                } else if (this.acceleration >= 4 && this.acceleration < 4.5){
+                    return "B+";
+                } else if (this.acceleration >= 4.5 && this.acceleration < 5){
+                    return "A";
+                } else if (this.acceleration >= 5 && this.acceleration < 5.5){
+                    return "A+";
+                } else if (this.acceleration >= 5.5 && this.acceleration < 6){
+                    return "S";
+                } else if (this.acceleration >= 6){
+                    return "S+";
+                } else {
+                    return "G";
+                }
+            }
         }
 
 
         let GameState = {
             stables: [],
             year: 0,
-            curHorse: 0
+            curHorse: 0,
+            screenState: "StartScreen" 
         };
+
+        let mousePos = {
+            x: 0,
+            y: 0
+        }
+
         let animationId;
+
+        let fNameList = ["Swift", "Bold", "Brave", "Fierce", "Gentle", "Noble", "Mighty", "Wild", "Gallant", "Loyal", "Steady", "Silent", "Clever", "Sly", "Fearless", "Valiant", "Lithe", "Proud", "Quiet", "Grand", "Stormy", "Sunny", "Dusky", "Glorious", "Dashing", "Radiant", "Sable", "Crimson", "Golden", "Silver", "Azure", "Shining", "Rusty", "Grizzled", "Blazing", "Crisp", "Shady", "Dusky", "Ivory", "Amber", "Burnished", "Ashen", "Frosty", "Chilly", "Hot", "Icy", "Bright", "Dark", "Pale", "Rich", "Deep", "Lean", "Brawny", "Sturdy", "Tawny", "Sandy", "Marbled", "Velvet", "Smooth", "Jagged", "Wiry", "Rugged", "Snappy", "Zesty", "Peppy", "Zany", "Witty", "Loyal", "Eager", "Able", "Kindly", "Sunny", "Lucky", "Grim", "Humble", "Vivid", "Dull", "Glossy", "Brilliant", "Wicked", "Bitter", "Salty", "Sweet", "Flaky", "Dusty", "Soapy", "Oily", "Moody", "Grimy", "Fuzzy", "Fuzzy", "Charming", "Coy", "Curious", "Wistful", "Snug", "Cozy", "Breezy", "Choppy", "Brisk", "Nippy", "Twinkling", "Grass", "Comet", "Akai", "Shiroi", "Kuroi", "Hayai", "Yasashii", "Utsukushii", "Tsurai", "Amai", "Chiisana", "Odayaka"]
+        let lNameList = ["Comet", "Dancer", "Whisper", "Blaze", "Thunder", "Drifter", "Gale", "Shadow", "Wind", "Spark", "Echo", "Strike", "Flame", "Runner", "Flicker", "Storm", "Flight", "Glide", "Dash", "Wanderer", "Breaker", "Surge", "Roar", "Wisp", "Saber", "Flash", "Streak", "Whirl", "Crash", "Crescent", "Skipper", "Breeze", "Shimmer", "Rider", "Spirit", "Charger", "Strider", "Fury", "Bolt", "Torrent", "Flick", "Trot", "Rush", "Leap", "Pulse", "Racer", "Wander", "Drift", "Ripple", "Crash", "Glint", "Flicker", "Glide", "Glimmer", "Cannon", "Echo", "Snap", "Rumble", "Spire", "Tide", "Whistle", "Moon", "Cinder", "Ember", "Whinny", "Reign", "Wraith", "Nudge", "Howl", "Chime", "Loom", "Spiral", "Whisk", "Trick", "Charm", "Clash", "Flick", "Prance", "Glimpse", "Hover", "Vault", "Swirl", "Whirl", "Skip", "Drizzle", "Comet", "Smoke", "Hush", "Charge", "Swoop", "Rebel", "Whisker", "Sparkle", "Stumble", "Grin", "Nuzzle", "Thump", "Crackle", "Zoom", "Quiver", "Swish", "Eater", "Nibbler", "McQueen", "Kaze", "Yami", "Hikari", "Tsuki", "Hana", "Kumo", "Tora", "Sakura", "Inazuma", "Kiri"]
 
         GameState.curHorse = new Horse("Reverie", 3, 3, 3, 3, 120, 20, 160);
         horsie = GameState.curHorse;
-        horser = new Horse("Honse", 5, 1, 2, 4, 80, 27, 27);
+        horser = new Horse("Honse", 5, 1, 3, 4, 80, 200, 100);
+        horso = breedHorses(horsie, horser);
 
-        logHorse(horsie);
-        logHorse(horser);
+        
 
         //logs the information of the horse to the console
         function logHorse(horsie){
-            console.log(`${horsie.name} : SPD(${horsie.speedGrade}) | STA(${horsie.staminaGrade})`);
+            console.log(`${horsie.name} : SPD(${horsie.speedGrade}) | STA(${horsie.staminaGrade}) | ACC(${horsie.accelerationGrade})`);
         }
 
 
@@ -148,13 +196,26 @@
             return Math.random() * (max - min) + min;
         }
 
-        //breeds two horses. The avg of each of the stats +- some small random number will be the stats of the child. 
+        //breeds two horses. The avg of each of the stats +- some small random number will be the stats of the child. returns the resulting child horse.
         function breedHorses(horse1, horse2){
             const speed = ((horse1.speed + horse2.speed)/2) +  randFloat(-0.3, 0.3);
+            if(speed < 0){speed = 0;}
             const stamina = ((horse1.stamina + horse2.stamina)/2) + randFloat(-0.45, 0.45);
+            if(stamina < 0){stamina = 0;}
             const acceleration = ((horse1.acceleration + horse2.acceleration)/2) + randFloat(-0.35, 0.35);
+            if(acceleration < 0){acceleration = 0;}
             const finish = ((horse1.finish + horse2.finish)/2) + randFloat(-0.4, 0.4);
+            if(finish < 0){finish = 0;}
             const red = ((horse1.color[0] + horse2.color[0])/2) + randInt(-20, 20);
+            if(red < 0){red = 0;}else if(red > 255){red = 255;}
+            const blue = ((horse1.color[2] + horse2.color[2])/2) + randInt(-20, 20);
+            if(blue < 0){blue = 0;}else if(blue > 255){blue = 255;}
+            const green = ((horse1.color[1] + horse2.color[1])/2) + randInt(-20, 20);
+            if(green < 0){green = 0;}else if(green > 255){green = 255;}
+            name = `${fNameList[randInt(0, fNameList.length)]} ${lNameList[randInt(0, lNameList.length)]}`
+            child = new Horse(name, speed, stamina, acceleration, finish, red, green, blue);
+
+            return child;
         }
 
         //draws the horse on screen with it's proper color;
@@ -167,6 +228,47 @@
             
         }
 
+        //functions for loading each screen
+
+        //shows the tabs at the bottom for menu navigation
+        function showNavPanels(ctx){
+            ctx.fillStyle = "#999999";
+            ctx.fillRect(0, 660, 720, 60);
+            ctx.fillStyle = "#111111";
+            ctx.fillRect(0, 660, 720, 2);
+            for (let x = 0; x < 5; x++){
+                ctx.fillRect(x * 144, 660, 2, 60);
+            }
+        }
+        
+        //loads the start screen
+        function startScreen(ctx){
+            ctx.font = "45px Arial";
+            ctx.fillStyle = "#dddddd";
+            ctx.strokeStyle = "#ffcdcd";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("Click to Start!", 360, 360, 300);
+        }
+
+        //gets the position of the mouse
+        addEventListener('mousemove', function(event){
+            mousePos.x = event.clientX;
+            mousePos.y = event.clientY;
+        });
+
+        //upon clicking, does stuff based on the screen state.
+        addEventListener('click', function(){
+            //starts the game
+            if (GameState.screenState === "StartScreen"){
+                GameState.screenState = "HomeScreen";
+                console.log("Game started");
+            //for all menu screens, allows interaction of switching between other menu screens
+            } else if(GameState.screenState === "HomeScreen" || GameState.screenState === "StablesScreen" || GameState.screenState === "BreedingScreen"){
+                console.log("MousePos: ", mousePos.x, mousePos.y);
+            }
+        });
+
 
 
         //animation loop
@@ -178,12 +280,18 @@
             const ctx = canvas.getContext('2d');
 
             //clears screene every frame
-            ctx.clearRect(0,0,512,512);
-            ctx.fillStyle = '#222222';
-            ctx.fillRect(0,0,512,512);
+            ctx.clearRect(0,0,720,720);
+            ctx.fillStyle = '#785630';
+            ctx.fillRect(0,0,720,720);
             
-            drawHorse(horsie, 12, 12, ctx);
-            drawHorse(horser, 80, 12, ctx);
+            if(GameState.screenState === "StartScreen"){
+                startScreen(ctx);
+            } else {
+                showNavPanels(ctx);
+                drawHorse(horsie, 12, 12, ctx);
+                drawHorse(horser, 80, 12, ctx);
+                drawHorse(horso, 46, 80, ctx);
+            }
         }
 
         
