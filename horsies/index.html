@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>notUno</title>
+</head>
+<body>
+    <div class="container">
+        <canvas
+          id="canvas"
+          width="300"
+          height="300"
+          style="height: 300px; width: 300px"
+        ></canvas>
+        <pre id="log"></pre>
+    </div>
+    <script>
+        /*
+        I dunno, play horsie game tho
+        
+        */
+
+        //defining horse class
+        class Horse {
+            constructor(name, spd, stam, accel, finish, red, green, blue){
+                this.name = name;
+                this.speed = spd;
+                this.speedGrade = this.getSpdRating();
+                this.stamina = stam;
+                this.staminaGrade = this.getStaminaRating();
+                this.acceleration = accel;
+                this.finish = finish;
+                this.fatigue = 0;
+                this.velocity = 0;
+                this.img = new Image();
+                this.img.src = "img/horsePNG.png";
+                this.red = red;
+                this.blue = blue;
+                this.color = [red, green, blue];
+            }
+
+            //assigns a letter grade to be associated with the horse's speed stat
+            getSpdRating(){
+                if(this.speed < 1){
+                    return "G";
+                } else if (this.speed >=1 && this.speed < 1.5){
+                    return "F";
+                } else if (this.speed >=1.5 && this.speed < 2){
+                    return "F+";
+                } else if (this.speed >= 2 && this.speed <2.3){
+                    return "E";
+                } else if (this.speed >= 2.3 && this.speed < 2.5){
+                    return "E+";
+                } else if (this.speed >= 2.5 && this.speed < 2.8){
+                    return "D";
+                } else if (this.speed >= 2.8 && this.speed < 3){
+                    return "D+";
+                } else if (this.speed >= 3 && this.speed < 3.3){
+                    return "C";
+                } else if (this.speed >= 3.3 && this.speed < 3.7){
+                    return "C+";
+                } else if (this.speed >= 3.7 && this.speed < 4){
+                    return "B";
+                } else if (this.speed >= 4 && this.speed < 4.6){
+                    return "B+";
+                } else if (this.speed >= 4.6 && this.speed < 5.3){
+                    return "A";
+                } else if (this.speed >= 5.3 && this.speed < 6){
+                    return "A+";
+                } else if (this.speed >= 6 && this.speed < 6.4){
+                    return "S";
+                } else if (this.speed >= 6.4){
+                    return "S+";
+                } else {
+                    return "G";
+                }
+            }
+
+            //assigns a letter grade to be associated with the horse's speed stat
+            getStaminaRating(){
+                if(this.stamina < 0.5){
+                    return "G";
+                } else if (this.stamina >=.5 && this.stamina < 0.8){
+                    return "F";
+                } else if (this.stamina >=0.8 && this.stamina < 1){
+                    return "F+";
+                } else if (this.stamina >= 1 && this.stamina < 1.3){
+                    return "E";
+                } else if (this.stamina >= 1.3 && this.stamina < 1.6){
+                    return "E+";
+                } else if (this.stamina >= 1.6 && this.stamina < 2){
+                    return "D";
+                } else if (this.stamina >= 2 && this.stamina < 2.3){
+                    return "D+";
+                } else if (this.stamina >= 2.3 && this.stamina < 2.6){
+                    return "C";
+                } else if (this.stamina >= 2.6 && this.stamina < 3){
+                    return "C+";
+                } else if (this.stamina >= 3 && this.stamina < 3.3){
+                    return "B";
+                } else if (this.stamina >= 3.3 && this.stamina < 3.5){
+                    return "B+";
+                } else if (this.stamina >= 3.5 && this.stamina < 4){
+                    return "A";
+                } else if (this.stamina >= 4 && this.stamina < 4.3){
+                    return "A+";
+                } else if (this.stamina >= 4.3 && this.stamina < 4.6){
+                    return "S";
+                } else if (this.stamina >= 4.6){
+                    return "S+";
+                } else {
+                    return "G";
+                }
+            }
+        }
+
+
+        let GameState = {
+            stables: [],
+            year: 0,
+            curHorse: 0
+        };
+        let animationId;
+
+        GameState.curHorse = new Horse("Reverie", 3, 3, 3, 3, 120, 20, 160);
+        horsie = GameState.curHorse;
+        horser = new Horse("Honse", 5, 1, 2, 4, 80, 27, 27);
+
+        logHorse(horsie);
+        logHorse(horser);
+
+        //logs the information of the horse to the console
+        function logHorse(horsie){
+            console.log(`${horsie.name} : SPD(${horsie.speedGrade}) | STA(${horsie.staminaGrade})`);
+        }
+
+
+        //gets a random integer between min and max (inclusive)
+        function randInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        //gets a random flaot between min and max (inclusive)
+        function randFloat(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        //breeds two horses. The avg of each of the stats +- some small random number will be the stats of the child. 
+        function breedHorses(horse1, horse2){
+            const speed = ((horse1.speed + horse2.speed)/2) +  randFloat(-0.3, 0.3);
+            const stamina = ((horse1.stamina + horse2.stamina)/2) + randFloat(-0.45, 0.45);
+            const acceleration = ((horse1.acceleration + horse2.acceleration)/2) + randFloat(-0.35, 0.35);
+            const finish = ((horse1.finish + horse2.finish)/2) + randFloat(-0.4, 0.4);
+            const red = ((horse1.color[0] + horse2.color[0])/2) + randInt(-20, 20);
+        }
+
+        //draws the horse on screen with it's proper color;
+        function drawHorse(horse, x, y, ctx){
+            ctx.drawImage(horse.img, x, y);
+            ctx.globalCompositeOperation = "color";
+            ctx.fillStyle = `rgb(${horse.color[0]}, ${horse.color[1]}, ${horse.color[2]})`;
+            ctx.fillRect(x, y, 64, 64);
+            ctx.globalCompositeOperation = "source-over";
+            
+        }
+
+
+
+        //animation loop
+        animationId = requestAnimationFrame(animate);
+
+        function animate(){
+            animationId = requestAnimationFrame(animate);
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            //clears screene every frame
+            ctx.clearRect(0,0,512,512);
+            ctx.fillStyle = '#222222';
+            ctx.fillRect(0,0,512,512);
+            
+            drawHorse(horsie, 12, 12, ctx);
+            drawHorse(horser, 80, 12, ctx);
+        }
+
+        
+
+    </script>
+</body>
+</html>
