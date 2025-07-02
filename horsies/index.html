@@ -39,6 +39,10 @@
                 this.red = red;
                 this.blue = blue;
                 this.color = [red, green, blue];
+                this.parent1 = null;
+                this.parent2 = null;
+                this.x = -100;
+                this.y = -100;
             }
 
             //assigns a letter grade to be associated with the horse's speed stat
@@ -153,7 +157,7 @@
             }
         }
 
-
+        //the state of the game. has some important variables that need global acesss
         let GameState = {
             stables: [],
             year: 0,
@@ -161,20 +165,30 @@
             screenState: "StartScreen" 
         };
 
+        //the position of the mouse. updated in eventListener
         let mousePos = {
             x: 0,
             y: 0
         }
 
+        //need this for animation
         let animationId;
 
-        let fNameList = ["Swift", "Bold", "Brave", "Fierce", "Gentle", "Noble", "Mighty", "Wild", "Gallant", "Loyal", "Steady", "Silent", "Clever", "Sly", "Fearless", "Valiant", "Lithe", "Proud", "Quiet", "Grand", "Stormy", "Sunny", "Dusky", "Glorious", "Dashing", "Radiant", "Sable", "Crimson", "Golden", "Silver", "Azure", "Shining", "Rusty", "Grizzled", "Blazing", "Crisp", "Shady", "Dusky", "Ivory", "Amber", "Burnished", "Ashen", "Frosty", "Chilly", "Hot", "Icy", "Bright", "Dark", "Pale", "Rich", "Deep", "Lean", "Brawny", "Sturdy", "Tawny", "Sandy", "Marbled", "Velvet", "Smooth", "Jagged", "Wiry", "Rugged", "Snappy", "Zesty", "Peppy", "Zany", "Witty", "Loyal", "Eager", "Able", "Kindly", "Sunny", "Lucky", "Grim", "Humble", "Vivid", "Dull", "Glossy", "Brilliant", "Wicked", "Bitter", "Salty", "Sweet", "Flaky", "Dusty", "Soapy", "Oily", "Moody", "Grimy", "Fuzzy", "Fuzzy", "Charming", "Coy", "Curious", "Wistful", "Snug", "Cozy", "Breezy", "Choppy", "Brisk", "Nippy", "Twinkling", "Grass", "Comet", "Akai", "Shiroi", "Kuroi", "Hayai", "Yasashii", "Utsukushii", "Tsurai", "Amai", "Chiisana", "Odayaka"]
-        let lNameList = ["Comet", "Dancer", "Whisper", "Blaze", "Thunder", "Drifter", "Gale", "Shadow", "Wind", "Spark", "Echo", "Strike", "Flame", "Runner", "Flicker", "Storm", "Flight", "Glide", "Dash", "Wanderer", "Breaker", "Surge", "Roar", "Wisp", "Saber", "Flash", "Streak", "Whirl", "Crash", "Crescent", "Skipper", "Breeze", "Shimmer", "Rider", "Spirit", "Charger", "Strider", "Fury", "Bolt", "Torrent", "Flick", "Trot", "Rush", "Leap", "Pulse", "Racer", "Wander", "Drift", "Ripple", "Crash", "Glint", "Flicker", "Glide", "Glimmer", "Cannon", "Echo", "Snap", "Rumble", "Spire", "Tide", "Whistle", "Moon", "Cinder", "Ember", "Whinny", "Reign", "Wraith", "Nudge", "Howl", "Chime", "Loom", "Spiral", "Whisk", "Trick", "Charm", "Clash", "Flick", "Prance", "Glimpse", "Hover", "Vault", "Swirl", "Whirl", "Skip", "Drizzle", "Comet", "Smoke", "Hush", "Charge", "Swoop", "Rebel", "Whisker", "Sparkle", "Stumble", "Grin", "Nuzzle", "Thump", "Crackle", "Zoom", "Quiver", "Swish", "Eater", "Nibbler", "McQueen", "Kaze", "Yami", "Hikari", "Tsuki", "Hana", "Kumo", "Tora", "Sakura", "Inazuma", "Kiri"]
+        //list of random names to be assigned to offspring horses.
+        let fNameList = ["Swift", "Sakura", "Bold", "Reverie", "Brave", "Fierce", "Gentle", "Noble", "Mighty", "Wild", "Gallant", "Loyal", "Steady", "Silent", "Clever", "Sly", "Fearless", "Valiant", "Lithe", "Proud", "Quiet", "Grand", "Stormy", "Sunny", "Dusky", "Glorious", "Dashing", "Radiant", "Sable", "Crimson", "Golden", "Silver", "Azure", "Shining", "Rusty", "Grizzled", "Blazing", "Crisp", "Shady", "Dusky", "Ivory", "Amber", "Burnished", "Ashen", "Frosty", "Chilly", "Hot", "Icy", "Bright", "Dark", "Pale", "Rich", "Deep", "Lean", "Brawny", "Sturdy", "Tawny", "Sandy", "Marbled", "Velvet", "Smooth", "Jagged", "Wiry", "Rugged", "Snappy", "Zesty", "Peppy", "Zany", "Witty", "Loyal", "Eager", "Able", "Kindly", "Sunny", "Lucky", "Grim", "Humble", "Vivid", "Dull", "Glossy", "Brilliant", "Wicked", "Bitter", "Salty", "Sweet", "Flaky", "Dusty", "Soapy", "Oily", "Moody", "Grimy", "Fuzzy", "Fuzzy", "Charming", "Coy", "Curious", "Wistful", "Snug", "Cozy", "Breezy", "Choppy", "Brisk", "Nippy", "Twinkling", "Grass", "Comet","Fire", "Super", "Mejiro", "Akai", "Shiroi", "Kuroi", "Hayai", "Yasashii", "Utsukushii", "Tsurai", "Amai", "Chiisana", "Odayaka", "Yukiko", "Little", "Cyan"];
+        let lNameList = ["Comet", "Dancer", "Calypso", "Whisper", "Blaze", "Thunder", "Drifter", "Gale", "Shadow", "Wind", "Spark", "Echo", "Strike", "Flame", "Runner", "Flicker", "Storm", "Flight", "Glide", "Dash", "Wanderer", "Breaker", "Surge", "Roar", "Wisp", "Saber", "Flash", "Streak", "Whirl", "Crash", "Crescent", "Skipper", "Breeze", "Shimmer", "Rider", "Spirit", "Charger", "Strider", "Fury", "Bolt", "Torrent", "Flick", "Trot", "Rush", "Leap", "Pulse", "Racer", "Wander", "Drift", "Ripple", "Crash", "Glint", "Flicker", "Glide", "Glimmer", "Cannon", "Echo", "Snap", "Rumble", "Spire", "Tide", "Whistle", "Moon", "Cinder", "Ember", "Whinny", "Reign", "Wraith", "Nudge", "Howl", "Chime", "Loom", "Spiral", "Whisk", "Trick", "Charm", "Clash", "Flick", "Prance", "Glimpse", "Hover", "Vault", "Swirl", "Whirl", "Skip", "Drizzle", "Comet", "Smoke", "Hush", "Charge", "Swoop", "Rebel", "Whisker", "Sparkle", "Stumble", "Grin", "Nuzzle", "Thump", "Crackle", "Zoom", "Quiver", "Swish", "Eater", "Nibbler", "McQueen", "Emblem", "Creek", "Kaze", "Yami", "Hikari", "Tsuki", "Hana", "Kumo", "Tora", "Sakura", "Inazuma", "Kiri", "Yasashi", "Droplet", "Yoh", "VTuber"];
 
-        GameState.curHorse = new Horse("Reverie", 3, 3, 3, 3, 120, 20, 160);
+        //just some test horses for stuff.
+        GameState.curHorse = new Horse("Reverie Calypso", 3, 3, 3, 3, 101, 88, 168);
         horsie = GameState.curHorse;
         horser = new Horse("Honse", 5, 1, 3, 4, 80, 200, 100);
         horso = breedHorses(horsie, horser);
+        GameState.stables.push(horsie);
+        GameState.stables.push(horser);
+        GameState.stables.push(horso);
+        for(let i = 0; i < 60; i++){
+            GameState.stables.push(randHorse());
+        }
 
         
 
@@ -182,6 +196,9 @@
         function logHorse(horsie){
             console.log(`${horsie.name} : SPD(${horsie.speedGrade}) | STA(${horsie.staminaGrade}) | ACC(${horsie.accelerationGrade})`);
         }
+
+        //pushes the horse into the stables list
+
 
 
         //gets a random integer between min and max (inclusive)
@@ -191,9 +208,23 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
-        //gets a random flaot between min and max (inclusive)
+        //gets a random float between min and max (inclusive)
         function randFloat(min, max) {
             return Math.random() * (max - min) + min;
+        }
+
+        //generates a random horse of no higher than b quality in any stat.
+        function randHorse(){
+            name = `${fNameList[randInt(0, fNameList.length-1)]} ${lNameList[randInt(0, fNameList.length-1)]}`;
+            speed = randFloat(0, 3.5);
+            stamina = randFloat(0, 3);
+            acceleration = randFloat(0, 3.5);
+            finish = randFloat(0, 3);
+            red = randInt(0, 255);
+            green = randInt(0, 255);
+            blue = randInt(0, 255);
+
+            return new Horse(name, speed, stamina, acceleration, finish, red, green, blue);
         }
 
         //breeds two horses. The avg of each of the stats +- some small random number will be the stats of the child. returns the resulting child horse.
@@ -212,8 +243,10 @@
             if(blue < 0){blue = 0;}else if(blue > 255){blue = 255;}
             const green = ((horse1.color[1] + horse2.color[1])/2) + randInt(-20, 20);
             if(green < 0){green = 0;}else if(green > 255){green = 255;}
-            name = `${fNameList[randInt(0, fNameList.length)]} ${lNameList[randInt(0, lNameList.length)]}`
+            name = `${fNameList[randInt(0, fNameList.length-1)]} ${lNameList[randInt(0, lNameList.length-1)]}`
             child = new Horse(name, speed, stamina, acceleration, finish, red, green, blue);
+            child.parent1 = horse1;
+            child.parent2 = horse2;
 
             return child;
         }
@@ -230,7 +263,7 @@
 
         //functions for loading each screen
 
-        //shows the tabs at the bottom for menu navigation
+        //shows the tabs at the bottom for menu navigation in the main menus' screens
         function showNavPanels(ctx){
             ctx.fillStyle = "#999999";
             ctx.fillRect(0, 660, 720, 60);
@@ -238,6 +271,48 @@
             ctx.fillRect(0, 660, 720, 2);
             for (let x = 0; x < 5; x++){
                 ctx.fillRect(x * 144, 660, 2, 60);
+            }
+            ctx.fillRect(718, 660, 2, 60);
+            
+            //fills in the current menu along the navbar with a reddish color
+            ctx.fillStyle = "#ff8080";
+            if(GameState.screenState === "HomeScreen"){
+                ctx.fillRect(290, 662, 142, 60);
+            } else if(GameState.screenState === "StablesScreen"){
+                ctx.fillRect(434, 662, 142, 60);
+            } else if(GameState.screenState === "BreedingScreen"){
+                ctx.fillRect(578, 662, 140, 60);
+            } else if(GameState.screenState === "StartCareerScreen"){
+                ctx.fillRect(2, 662, 142, 60);
+            }
+        }
+
+        //loads the stables screen
+        function stablesScreen(ctx){
+            showNavPanels(ctx);
+
+            ctx.font = "40px Arial";
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText(`STABLES: ${GameState.stables.length}/64`, 360, 10);
+            
+
+
+            ctx.font = "15px Sans";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "bottom";
+            for(let i = 0; i < GameState.stables.length ; i++){
+                horse = GameState.stables[i];
+                row = Math.floor(i/8);
+                column = (i % 8);
+                x = 35 + (column * 64) + (column* 20); //base margin + png size + buffer size (between images);
+                y = 50 + (row * 64) + (row * 10);
+                horse.x = x;
+                horse.y = y;
+                drawHorse(horse, x, y, ctx);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText(horse.name, x, y+64, 64);
             }
         }
         
@@ -259,13 +334,34 @@
 
         //upon clicking, does stuff based on the screen state.
         addEventListener('click', function(){
+
+            console.log("MousePos: ", mousePos.x, mousePos.y);
+
             //starts the game
             if (GameState.screenState === "StartScreen"){
                 GameState.screenState = "HomeScreen";
                 console.log("Game started");
             //for all menu screens, allows interaction of switching between other menu screens
-            } else if(GameState.screenState === "HomeScreen" || GameState.screenState === "StablesScreen" || GameState.screenState === "BreedingScreen"){
-                console.log("MousePos: ", mousePos.x, mousePos.y);
+            } else if(GameState.screenState === "HomeScreen" || GameState.screenState === "StablesScreen" || GameState.screenState === "BreedingScreen" || GameState.screenState === "StartCareerScreen"){
+                if(mousePos.x > 2 && mousePos.x < 144 && mousePos.y > 662){
+                    GameState.screenState = "StartCareerScreen";
+                } else if(mousePos.x > 146 && mousePos.x < 288 && mousePos.y > 662){
+                    GameState.screenState = "StartScreen"; //placeholder for now
+                    console.log("start");
+                } else if(mousePos.x > 290 && mousePos.x < 432 && mousePos.y > 662){
+                    GameState.screenState = "HomeScreen";
+                } else if(mousePos.x > 434 && mousePos.x < 576 && mousePos.y > 662){
+                    GameState.screenState = "StablesScreen";
+                } else if(mousePos.x > 578 && mousePos.x < 720 && mousePos.y > 662){
+                    GameState.screenState = "BreedingScreen";
+                }
+            }
+
+            //stables screen clicks
+            if (GameState.screenState === "StablesScreen"){
+                for(horse of GameState.stables){
+                    logHorse(horse);
+                }
             }
         });
 
@@ -284,9 +380,14 @@
             ctx.fillStyle = '#785630';
             ctx.fillRect(0,0,720,720);
             
+            //if on start screen, load the start screen
             if(GameState.screenState === "StartScreen"){
                 startScreen(ctx);
-            } else {
+            }else if(GameState.screenState === "StablesScreen"){ 
+                stablesScreen(ctx);
+            
+            
+            }else {
                 showNavPanels(ctx);
                 drawHorse(horsie, 12, 12, ctx);
                 drawHorse(horser, 80, 12, ctx);
